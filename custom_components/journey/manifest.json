@@ -1,0 +1,15 @@
+{
+  "domain": "journey",
+  "name": "Journey",
+  "documentation": "https://github.com/intrinseca/journey",
+  "issue_tracker": "https://github.com/intrinseca/journey/issues",
+  "dependencies": [],
+  "config_flow": true,
+  "codeowners": [
+    "@intrinseca"
+  ],
+  "requirements": [
+    "OSMPythonTools==0.3.3"
+  ],
+  "version": "0.1.0"
+}
