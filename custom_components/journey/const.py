@@ -1,30 +1,28 @@
 """Constants for Journey."""
 # Base component constants
+
 NAME = "Journey"
 DOMAIN = "journey"
 DOMAIN_DATA = f"{DOMAIN}_data"
 VERSION = "0.1.0"
 
-ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
+ATTRIBUTION = "Map data © OpenStreetMap contributors"
 ISSUE_URL = "https://github.com/intrinseca/journey/issues"
 
 # Icons
-ICON = "mdi:format-quote-close"
-
-# Device classes
-BINARY_SENSOR_DEVICE_CLASS = "connectivity"
+ICON = "mdi:map-marker-right"
 
 # Platforms
-BINARY_SENSOR = "binary_sensor"
 SENSOR = "sensor"
-SWITCH = "switch"
-PLATFORMS = [BINARY_SENSOR, SENSOR, SWITCH]
-
+PLATFORMS = [SENSOR]
 
 # Configuration and options
 CONF_ENABLED = "enabled"
-CONF_USERNAME = "username"
-CONF_PASSWORD = "password"
+CONF_NAME = "name"
+CONF_OSM_USERNAME = "osm_username"
+CONF_GMAPS_TOKEN = "gmaps_token"
+CONF_ORIGIN = "origin"
+CONF_DESTINATION = "destination"
 
 # Defaults
 DEFAULT_NAME = DOMAIN

@@ -1,9 +1,11 @@
 """Sensor platform for Journey."""
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 from .const import DEFAULT_NAME
 from .const import DOMAIN
 from .const import ICON
 from .const import SENSOR
-from .entity import JourneyEntity
+from .const import ATTRIBUTION
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
@@ -12,8 +14,25 @@ async def async_setup_entry(hass, entry, async_add_devices):
     async_add_devices([JourneySensor(coordinator, entry)])
 
 
-class JourneySensor(JourneyEntity):
+class JourneySensor(CoordinatorEntity):
     """journey Sensor class."""
+
+    def __init__(self, coordinator, config_entry):
+        super().__init__(coordinator)
+        self.config_entry = config_entry
+
+    @property
+    def unique_id(self):
+        """Return a unique ID to use for this entity."""
+        return self.config_entry.entry_id
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        return {
+            "attribution": ATTRIBUTION,
+            "full_address": self.coordinator.data.displayName(),
+        }
 
     @property
     def name(self):
@@ -23,14 +42,15 @@ class JourneySensor(JourneyEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.coordinator.data.get("city")
+        address = self.coordinator.data.address()
+
+        for key in ["village", "suburb", "town", "city", "state", "country"]:
+            if key in address:
+                return address[key]
+
+        return "Unknown"
 
     @property
     def icon(self):
         """Return the icon of the sensor."""
         return ICON
-
-    @property
-    def device_class(self):
-        """Return de device class of the sensor."""
-        return "journey__custom_device_class"

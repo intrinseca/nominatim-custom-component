@@ -3,6 +3,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Homeassistant",
+      "type": "python",
+      "request": "launch",
+      "module": "homeassistant",
+      "args": [
+        "-c",
+        "/config"
+      ]
+    },
+    {
       // Example of attaching to local debug server
       "name": "Python: Attach Local",
       "type": "python",

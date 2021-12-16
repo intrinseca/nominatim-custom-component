@@ -9,21 +9,24 @@ import logging
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Config
+from homeassistant.core import Config, Event
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.helpers.event import async_track_state_change_event
+
+from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
+from homeassistant.helpers import location
 
 from .api import JourneyApiClient
-from .const import CONF_PASSWORD
-from .const import CONF_USERNAME
+from .const import CONF_GMAPS_TOKEN, CONF_OSM_USERNAME, CONF_ORIGIN, CONF_DESTINATION
 from .const import DOMAIN
 from .const import PLATFORMS
 from .const import STARTUP_MESSAGE
 
-SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(minutes=5)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -39,13 +42,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.data.setdefault(DOMAIN, {})
         _LOGGER.info(STARTUP_MESSAGE)
 
-    username = entry.data.get(CONF_USERNAME)
-    password = entry.data.get(CONF_PASSWORD)
+    username = entry.data.get(CONF_OSM_USERNAME)
+    password = entry.data.get(CONF_GMAPS_TOKEN)
+
+    origin = entry.data.get(CONF_ORIGIN)
+    destination = entry.data.get(CONF_DESTINATION)
 
     session = async_get_clientsession(hass)
     client = JourneyApiClient(username, password, session)
 
-    coordinator = JourneyDataUpdateCoordinator(hass, client=client)
+    coordinator = JourneyDataUpdateCoordinator(
+        hass, client=client, origin=origin, destination=destination
+    )
     await coordinator.async_refresh()
 
     if not coordinator.last_update_success:
@@ -64,6 +72,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
+def get_location_from_entity(hass, logger, entity_id):
+    """Get the location from the entity state or attributes."""
+    if (entity := hass.states.get(entity_id)) is None:
+        logger.error("Unable to find entity %s", entity_id)
+        return None
+
+    # Check if the entity has location attributes
+    if location.has_location(entity):
+        return get_location_from_attributes(entity)
+
+    # Check if device is in a zone
+    zone_entity = hass.states.get(f"zone.{entity.state}")
+    if location.has_location(zone_entity):
+        logger.debug(
+            "%s is in %s, getting zone location", entity_id, zone_entity.entity_id
+        )
+        return get_location_from_attributes(zone_entity)
+
+    # When everything fails just return nothing
+    return None
+
+
+def get_location_from_attributes(entity):
+    """Get the lat/long string from an entities attributes."""
+    attr = entity.attributes
+    return (float(attr.get(ATTR_LATITUDE)), float(attr.get(ATTR_LONGITUDE)))
+
+
 class JourneyDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
@@ -71,17 +107,35 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator):
         self,
         hass: HomeAssistant,
         client: JourneyApiClient,
+        origin: str,
+        destination: str,
     ) -> None:
         """Initialize."""
         self.api = client
         self.platforms = []
 
+        self._origin_entity_id = origin
+        self._destination_entity_id = destination
+
+        async_track_state_change_event(
+            hass, self._origin_entity_id, self._handle_state_change
+        )
+
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
+
+    async def _handle_state_change(self, event: Event):
+        await self.async_request_refresh()
 
     async def _async_update_data(self):
         """Update data via library."""
         try:
-            return await self.api.async_get_data()
+            origin = get_location_from_entity(
+                self.hass, _LOGGER, self._origin_entity_id
+            )
+            destination = get_location_from_entity(
+                self.hass, _LOGGER, self._destination_entity_id
+            )
+            return await self.api.async_get_data(origin, destination)
         except Exception as exception:
             raise UpdateFailed() from exception
 

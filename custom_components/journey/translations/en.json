@@ -3,10 +3,13 @@
     "step": {
       "user": {
         "title": "Journey",
-        "description": "If you need help with the configuration have a look here: https://github.com/intrinseca/journey",
+        "description": "Configure the API access and origin/destination points",
         "data": {
-          "username": "Username",
-          "password": "Password"
+          "osm_username": "OSM Username (Email address)",
+          "gmaps_token": "Google Maps API token",
+          "origin": "Origin",
+          "destination": "Destination",
+          "name": "Sensor Name"
         }
       }
     },
@@ -21,9 +24,7 @@
     "step": {
       "user": {
         "data": {
-          "binary_sensor": "Binary sensor enabled",
-          "sensor": "Sensor enabled",
-          "switch": "Switch enabled"
+          "sensor": "Sensor enabled"
         }
       }
     }
