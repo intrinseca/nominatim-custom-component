@@ -1,20 +1,19 @@
 """Sensor platform for Journey."""
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DEFAULT_NAME
+from .const import CONF_NAME
 from .const import DOMAIN
 from .const import ICON
-from .const import SENSOR
 from .const import ATTRIBUTION
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_devices([JourneySensor(coordinator, entry)])
+    async_add_devices([JourneyLocationSensor(coordinator, entry)])
 
 
-class JourneySensor(CoordinatorEntity):
+class JourneyLocationSensor(CoordinatorEntity):
     """journey Sensor class."""
 
     def __init__(self, coordinator, config_entry):
@@ -24,12 +23,12 @@ class JourneySensor(CoordinatorEntity):
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return self.config_entry.entry_id
+        return self.config_entry.entry_id + "-location"
 
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        return {
+        return self.coordinator.data.address() | {
             "attribution": ATTRIBUTION,
             "full_address": self.coordinator.data.displayName(),
         }
@@ -37,7 +36,9 @@ class JourneySensor(CoordinatorEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return f"{DEFAULT_NAME}_{SENSOR}"
+        name = self.config_entry.data.get(CONF_NAME)
+
+        return f"{name} Current Location"
 
     @property
     def state(self):

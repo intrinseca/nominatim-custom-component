@@ -40,7 +40,7 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             )
             if valid:
                 return self.async_create_entry(
-                    title=user_input[CONF_OSM_USERNAME], data=user_input
+                    title=user_input[CONF_NAME], data=user_input
                 )
             else:
                 self._errors["base"] = "auth"
