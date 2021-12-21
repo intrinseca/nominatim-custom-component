@@ -12,7 +12,6 @@ from .const import (
     CONF_ORIGIN,
     CONF_DESTINATION,
 )
-from .const import DOMAIN
 from .const import PLATFORMS
 
 
