@@ -22,7 +22,9 @@ class JourneyApiClient:
         self._password = password
         self._session = session
 
-        self.nominatim = Nominatim()
+        self.nominatim = Nominatim(
+            userAgent=f"Journey Home Assistant Integration ({self._username})"
+        )
 
     def get_location(
         self, origin: tuple[float, float], destination: tuple[float, float]
