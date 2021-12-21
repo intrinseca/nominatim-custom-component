@@ -39,3 +39,6 @@ class JourneyApiClient:
         return await asyncio.get_event_loop().run_in_executor(
             None, self.get_location, origin, destination
         )
+
+    async def test_credentials(self) -> bool:
+        return True
