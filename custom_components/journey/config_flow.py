@@ -5,13 +5,12 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .api import JourneyApiClient
-from .const import (
-    CONF_GMAPS_TOKEN,
-    CONF_OSM_USERNAME,
-    CONF_NAME,
-    CONF_ORIGIN,
-    CONF_DESTINATION,
-)
+from .const import CONF_DESTINATION
+from .const import CONF_GMAPS_TOKEN
+from .const import CONF_NAME
+from .const import CONF_ORIGIN
+from .const import CONF_OSM_USERNAME
+from .const import DOMAIN  # pylint: disable=unused-import
 from .const import PLATFORMS
 
 

@@ -3,7 +3,6 @@ import asyncio
 import logging
 
 import aiohttp
-
 from OSMPythonTools.nominatim import Nominatim
 
 TIMEOUT = 10

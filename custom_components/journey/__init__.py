@@ -9,19 +9,23 @@ import logging
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Config, Event
+from homeassistant.const import ATTR_LATITUDE
+from homeassistant.const import ATTR_LONGITUDE
+from homeassistant.core import Config
+from homeassistant.core import Event
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import location
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
-from homeassistant.helpers.event import async_track_state_change_event
-
-from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
-from homeassistant.helpers import location
 
 from .api import JourneyApiClient
-from .const import CONF_GMAPS_TOKEN, CONF_OSM_USERNAME, CONF_ORIGIN, CONF_DESTINATION
+from .const import CONF_DESTINATION
+from .const import CONF_GMAPS_TOKEN
+from .const import CONF_ORIGIN
+from .const import CONF_OSM_USERNAME
 from .const import DOMAIN
 from .const import PLATFORMS
 from .const import STARTUP_MESSAGE
@@ -29,6 +33,7 @@ from .const import STARTUP_MESSAGE
 SCAN_INTERVAL = timedelta(minutes=5)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
 
 # pylint: disable=unused-argument
 async def async_setup(hass: HomeAssistant, config: Config):

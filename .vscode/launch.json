@@ -8,10 +8,7 @@
       "request": "launch",
       "module": "homeassistant",
       "console": "integratedTerminal",
-      "args": [
-        "-c",
-        "/config"
-      ]
+      "args": ["-c", "/config"]
     },
     {
       // Example of attaching to local debug server

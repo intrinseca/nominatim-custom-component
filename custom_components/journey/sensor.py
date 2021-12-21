@@ -1,10 +1,10 @@
 """Sensor platform for Journey."""
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .const import ATTRIBUTION
 from .const import CONF_NAME
 from .const import DOMAIN
 from .const import ICON
-from .const import ATTRIBUTION
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
