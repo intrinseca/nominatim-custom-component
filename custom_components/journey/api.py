@@ -31,7 +31,7 @@ class JourneyApiClient:
         This function is used as a sync wrapper to the Nominatim API
         """
         try:
-            result = self.nominatim.query(*origin, reverse=True, zoom=14)
+            result = self.nominatim.query(*origin, reverse=True, zoom=16)
             return result
         except Exception as exception:  # pylint: disable=broad-except
             _LOGGER.error("Failed to perform reverse geocoding - %s", exception)
