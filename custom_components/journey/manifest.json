@@ -6,6 +6,6 @@
   "dependencies": [],
   "config_flow": true,
   "codeowners": ["@intrinseca"],
-  "requirements": ["OSMPythonTools==0.3.3"],
+  "requirements": ["OSMPythonTools==0.3.3", "googlemaps==2.5.1"],
   "version": "0.1.0"
 }

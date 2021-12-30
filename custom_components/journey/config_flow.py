@@ -2,7 +2,6 @@
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .api import JourneyApiClient
 from .const import CONF_DESTINATION
@@ -71,8 +70,7 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def _test_credentials(self, osm_username, gmaps_token):
         """Return true if credentials is valid."""
         try:
-            session = async_create_clientsession(self.hass)
-            client = JourneyApiClient(osm_username, gmaps_token, session)
+            client = JourneyApiClient(osm_username, gmaps_token)
             await client.test_credentials()
             return True
         except Exception:  # pylint: disable=broad-except

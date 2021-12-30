@@ -16,7 +16,6 @@ from homeassistant.core import Event
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import location
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -52,9 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     origin = entry.data.get(CONF_ORIGIN)
     destination = entry.data.get(CONF_DESTINATION)
-
-    session = async_get_clientsession(hass)
-    client = JourneyApiClient(username, password, session)
+    client = JourneyApiClient(username, password)
 
     coordinator = JourneyDataUpdateCoordinator(
         hass, client=client, origin=origin, destination=destination
@@ -132,12 +129,18 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator):
             hass, self._origin_entity_id, self._handle_state_change
         )
 
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=SCAN_INTERVAL,
+            update_method=self.update,
+        )
 
     async def _handle_state_change(self, event: Event):
         await self.async_request_refresh()
 
-    async def _async_update_data(self):
+    async def update(self):
         """Update data via library."""
         try:
             origin = get_location_from_entity(
