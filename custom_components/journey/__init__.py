@@ -85,15 +85,21 @@ def get_location_from_entity(hass, logger, entity_id):
 
     # Check if the entity has location attributes
     if location.has_location(entity):
+        logger.debug("%s has coords", entity_id)
         return get_location_from_attributes(entity)
 
     # Check if device is in a zone
-    zone_entity = hass.states.get(f"zone.{entity.state}")
+    if (zone_entity := hass.states.get(f"zone.{entity.state}")) is None:
+        logger.error("zone %s not found", entity.state)
+        return None
+
     if location.has_location(zone_entity):
         logger.debug(
             "%s is in %s, getting zone location", entity_id, zone_entity.entity_id
         )
         return get_location_from_attributes(zone_entity)
+    else:
+        logger.debug("%s is in %s, no zone location", entity_id, zone_entity.entity_id)
 
     # When everything fails just return nothing
     return None
