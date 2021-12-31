@@ -2,6 +2,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 
 from googlemaps import Client
 from OSMPythonTools.nominatim import Nominatim
@@ -53,7 +54,17 @@ class JourneyApiClient:
             return None
 
     def get_matrix(self, origin: tuple[float, float], destination: tuple[float, float]):
-        pass
+        try:
+            result = self._gmaps_client.distance_matrix(
+                origins=[origin],
+                destinations=[destination],
+                mode="driving",
+                departure_time=datetime.now(),
+            )
+            return result["rows"][0]["elements"][0]
+        except Exception as exception:  # pylint: disable=broad-except
+            _LOGGER.error("Failed to get distances - %s", exception)
+            return None
 
     def get_data(
         self, origin: tuple[float, float], destination: tuple[float, float]

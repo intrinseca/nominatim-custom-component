@@ -1,4 +1,5 @@
 """Sensor platform for Journey."""
+from homeassistant.const import TIME_MINUTES
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import JourneyData
@@ -11,11 +12,16 @@ from .const import ICON
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_devices([JourneyLocationSensor(coordinator, entry)])
+    async_add_devices(
+        [
+            JourneyLocationSensor(coordinator, entry),
+            JourneyTimeSensor(coordinator, entry),
+        ]
+    )
 
 
 class JourneyLocationSensor(CoordinatorEntity[JourneyData]):
-    """journey Sensor class."""
+    """Journey Location Sensor class."""
 
     def __init__(self, coordinator, config_entry):
         super().__init__(coordinator)
@@ -50,3 +56,48 @@ class JourneyLocationSensor(CoordinatorEntity[JourneyData]):
     def icon(self):
         """Return the icon of the sensor."""
         return ICON
+
+
+class JourneyTimeSensor(CoordinatorEntity[JourneyData]):
+    """Journey Travel Time Sensor Class"""
+
+    _attr_unit_of_measurement = TIME_MINUTES
+    _attr_icon = "mdi:timer"
+
+    def __init__(self, coordinator, config_entry):
+        super().__init__(coordinator)
+        self.config_entry = config_entry
+
+    @property
+    def unique_id(self):
+        """Return a unique ID to use for this entity."""
+        return self.config_entry.entry_id + "-time"
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+
+        dm = self.coordinator.data.distance_matrix
+
+        raw_result = {k: v["value"] for k, v in dm.items() if k != "status"}
+
+        duration_in_traffic = raw_result.get(
+            "duration_in_traffic", raw_result["duration"]
+        )
+        delay = duration_in_traffic - raw_result["duration"]
+
+        return raw_result | {
+            "delay_minutes": round(delay / 60),
+            "delay_factor": round(100 * delay / raw_result["duration"]),
+        }
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        name = self.config_entry.data.get(CONF_NAME)
+        return f"{name} Travel Time"
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return round(self.coordinator.data.distance_matrix["duration"]["value"] / 60)
