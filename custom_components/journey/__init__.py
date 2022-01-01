@@ -6,6 +6,7 @@ https://github.com/intrinseca/journey
 """
 import asyncio
 import logging
+import math
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -121,6 +122,7 @@ class JourneyData:
     origin_reverse_geocode: dict
     travel_time: dict
 
+    @property
     def origin_address(self) -> str:
         if self.origin_reverse_geocode is not None:
             for key in ["village", "suburb", "town", "city", "state", "country"]:
@@ -128,6 +130,51 @@ class JourneyData:
                     return self.origin_reverse_geocode.address()[key]
 
         return "Unknown"
+
+    @property
+    def travel_time_values(self) -> dict:
+        if self.travel_time is None:
+            return {}
+
+        return {k: v["value"] for k, v in self.travel_time.items() if k != "status"}
+
+    @property
+    def duration(self):
+        if self.travel_time_values is None:
+            return float("nan")
+
+        return self.travel_time_values.get("duration", float("nan"))
+
+    @property
+    def duration_min(self):
+        return round(self.duration / 60) if not math.isnan(self.duration) else None
+
+    @property
+    def duration_in_traffic(self):
+        if self.travel_time_values is None:
+            return float("nan")
+
+        return self.travel_time_values.get("duration_in_traffic", self.duration)
+
+    @property
+    def duration_in_traffic_min(self):
+        return (
+            round(self.duration_in_traffic / 60)
+            if not math.isnan(self.duration_in_traffic)
+            else None
+        )
+
+    @property
+    def delay(self):
+        return self.duration_in_traffic - self.duration
+
+    @property
+    def delay_min(self):
+        return round(self.delay / 60) if not math.isnan(self.delay) else None
+
+    @property
+    def delay_factor(self):
+        return round(100 * self.delay / self.duration) if self.duration > 0 else 0
 
 
 class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):
@@ -173,18 +220,27 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):
                 self.hass, _LOGGER, self._destination_entity_id
             )
 
-            address = await self.api.async_get_address(origin)
+            if origin is not None:
+                address = await self.api.async_get_address(origin)
 
-            if (
-                self._destination_entity_id.startswith("zone")
-                and self.hass.states.get(self._origin_entity_id)
-                == self._destination_entity_id[5:]
-            ):
-                _LOGGER.info("origin is equal to destination zone")
+                if destination is None:
+                    _LOGGER.error("Unable to get destination coordinates")
+                    traveltime = None
+                elif (
+                    self._destination_entity_id.startswith("zone")
+                    and self.hass.states.get(self._origin_entity_id)
+                    == self._destination_entity_id[5:]
+                ):
+                    _LOGGER.info("origin is equal to destination zone")
 
-                traveltime = None
+                    traveltime = None
+                else:
+                    traveltime = await self.api.async_get_traveltime(
+                        origin, destination
+                    )
             else:
-                traveltime = await self.api.async_get_traveltime(origin, destination)
+                _LOGGER.error("Unable to get origin coordinates")
+                address = None
 
             return JourneyData(address, traveltime)
         except Exception as exception:

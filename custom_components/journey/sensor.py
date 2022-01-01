@@ -50,7 +50,7 @@ class JourneyLocationSensor(CoordinatorEntity[JourneyData]):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.coordinator.data.origin_address()
+        return self.coordinator.data.origin_address
 
     @property
     def icon(self):
@@ -77,17 +77,11 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):
     def extra_state_attributes(self):
         """Return the state attributes."""
 
-        tt = self.coordinator.data.travel_time
-
-        raw_result = {k: v["value"] for k, v in tt.items() if k != "status"}
-
-        duration = raw_result["duration"]
-        duration_in_traffic = raw_result.get("duration_in_traffic", duration)
-        delay = duration_in_traffic - duration
+        raw_result = self.coordinator.data.travel_time_values
 
         return raw_result | {
-            "delay_minutes": round(delay / 60),
-            "delay_factor": round(100 * delay / duration) if duration > 0 else 0,
+            "delay_minutes": self.coordinator.data.delay_min,
+            "delay_factor": self.coordinator.data.delay_factor,
         }
 
     @property
@@ -99,4 +93,4 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return round(self.coordinator.data.travel_time["duration"]["value"] / 60)
+        return self.coordinator.data.duration_in_traffic_min
