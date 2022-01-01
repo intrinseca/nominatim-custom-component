@@ -2,7 +2,7 @@
 from homeassistant.const import TIME_MINUTES
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import JourneyData
+from . import JourneyData
 from .const import ATTRIBUTION
 from .const import CONF_NAME
 from .const import DOMAIN
@@ -77,18 +77,17 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):
     def extra_state_attributes(self):
         """Return the state attributes."""
 
-        dm = self.coordinator.data.distance_matrix
+        tt = self.coordinator.data.travel_time
 
-        raw_result = {k: v["value"] for k, v in dm.items() if k != "status"}
+        raw_result = {k: v["value"] for k, v in tt.items() if k != "status"}
 
-        duration_in_traffic = raw_result.get(
-            "duration_in_traffic", raw_result["duration"]
-        )
-        delay = duration_in_traffic - raw_result["duration"]
+        duration = raw_result["duration"]
+        duration_in_traffic = raw_result.get("duration_in_traffic", duration)
+        delay = duration_in_traffic - duration
 
         return raw_result | {
             "delay_minutes": round(delay / 60),
-            "delay_factor": round(100 * delay / raw_result["duration"]),
+            "delay_factor": round(100 * delay / duration) if duration > 0 else 0,
         }
 
     @property
@@ -100,4 +99,4 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return round(self.coordinator.data.distance_matrix["duration"]["value"] / 60)
+        return round(self.coordinator.data.travel_time["duration"]["value"] / 60)

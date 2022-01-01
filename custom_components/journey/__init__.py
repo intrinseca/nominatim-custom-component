@@ -6,6 +6,7 @@ https://github.com/intrinseca/journey
 """
 import asyncio
 import logging
+from dataclasses import dataclass
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
@@ -76,27 +77,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 def get_location_from_entity(hass, logger, entity_id):
     """Get the location from the entity state or attributes."""
+
     if (entity := hass.states.get(entity_id)) is None:
-        logger.error("Unable to find entity %s", entity_id)
+        logger.error("Locating %s: Unable to find", entity_id)
         return None
+
+    # Check if device is in a zone
+    if not entity_id.startswith("zone"):
+        if (zone_entity := hass.states.get(f"zone.{entity.state}")) is not None:
+            if location.has_location(zone_entity):
+                logger.debug(
+                    "Locating %s: in %s, getting zone location",
+                    entity_id,
+                    zone_entity.entity_id,
+                )
+                return get_location_from_attributes(zone_entity)
+
+            logger.debug(
+                "Locating %s: in %s, no zone location",
+                entity_id,
+                zone_entity.entity_id,
+            )
+        else:
+            logger.debug("Locating %s: [zone '%s' not found]", entity_id, entity.state)
 
     # Check if the entity has location attributes
     if location.has_location(entity):
-        logger.debug("%s has coords", entity_id)
+        logger.debug("Locating %s: from attributes", entity_id)
         return get_location_from_attributes(entity)
-
-    # Check if device is in a zone
-    if (zone_entity := hass.states.get(f"zone.{entity.state}")) is None:
-        logger.error("zone %s not found", entity.state)
-        return None
-
-    if location.has_location(zone_entity):
-        logger.debug(
-            "%s is in %s, getting zone location", entity_id, zone_entity.entity_id
-        )
-        return get_location_from_attributes(zone_entity)
-    else:
-        logger.debug("%s is in %s, no zone location", entity_id, zone_entity.entity_id)
 
     # When everything fails just return nothing
     return None
@@ -108,7 +116,21 @@ def get_location_from_attributes(entity):
     return (float(attr.get(ATTR_LATITUDE)), float(attr.get(ATTR_LONGITUDE)))
 
 
-class JourneyDataUpdateCoordinator(DataUpdateCoordinator):
+@dataclass
+class JourneyData:
+    origin_reverse_geocode: dict
+    travel_time: dict
+
+    def origin_address(self) -> str:
+        if self.origin_reverse_geocode is not None:
+            for key in ["village", "suburb", "town", "city", "state", "country"]:
+                if key in self.origin_reverse_geocode.address():
+                    return self.origin_reverse_geocode.address()[key]
+
+        return "Unknown"
+
+
+class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):
     """Class to manage fetching data from the API."""
 
     def __init__(
@@ -146,10 +168,25 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator):
             origin = get_location_from_entity(
                 self.hass, _LOGGER, self._origin_entity_id
             )
+
             destination = get_location_from_entity(
                 self.hass, _LOGGER, self._destination_entity_id
             )
-            return await self.api.async_get_data(origin, destination)
+
+            address = await self.api.async_get_address(origin)
+
+            if (
+                self._destination_entity_id.startswith("zone")
+                and self.hass.states.get(self._origin_entity_id)
+                == self._destination_entity_id[5:]
+            ):
+                _LOGGER.info("origin is equal to destination zone")
+
+                traveltime = None
+            else:
+                traveltime = await self.api.async_get_traveltime(origin, destination)
+
+            return JourneyData(address, traveltime)
         except Exception as exception:
             raise UpdateFailed() from exception
 

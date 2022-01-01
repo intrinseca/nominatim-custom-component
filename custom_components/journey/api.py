@@ -1,7 +1,6 @@
 """Sample API Client."""
 import asyncio
 import logging
-from dataclasses import dataclass
 from datetime import datetime
 
 from googlemaps import Client
@@ -12,18 +11,7 @@ TIMEOUT = 10
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-@dataclass
-class JourneyData:
-    origin_reverse_geocode: dict
-    distance_matrix: dict
-
-    def origin_address(self) -> str:
-        if self.origin_reverse_geocode is not None:
-            for key in ["village", "suburb", "town", "city", "state", "country"]:
-                if key in self.origin_reverse_geocode.address():
-                    return self.origin_reverse_geocode.address()[key]
-
-        return "Unknown"
+Coordinates = tuple[float, float]
 
 
 class JourneyApiClient:
@@ -39,7 +27,7 @@ class JourneyApiClient:
             userAgent=f"Journey Home Assistant Integration ({self._osm_username})"
         )
 
-    def get_address(self, location: tuple[float, float]):
+    def get_address(self, location: Coordinates):
         """
         Get the address based on a (lat, long) tuple.
 
@@ -53,7 +41,12 @@ class JourneyApiClient:
             _LOGGER.error("Failed to perform reverse geocoding - %s", exception)
             return None
 
-    def get_matrix(self, origin: tuple[float, float], destination: tuple[float, float]):
+    async def async_get_address(self, location: Coordinates):
+        return await asyncio.get_event_loop().run_in_executor(
+            None, self.get_address, location
+        )
+
+    def get_traveltime(self, origin: Coordinates, destination: Coordinates):
         try:
             result = self._gmaps_client.distance_matrix(
                 origins=[origin],
@@ -66,21 +59,9 @@ class JourneyApiClient:
             _LOGGER.error("Failed to get distances - %s", exception)
             return None
 
-    def get_data(
-        self, origin: tuple[float, float], destination: tuple[float, float]
-    ) -> JourneyData:
-        return JourneyData(
-            self.get_address(origin), self.get_matrix(origin, destination)
-        )
-
-    async def async_get_data(
-        self, origin: tuple[float, float], destination: tuple[float, float]
-    ) -> JourneyData:
-        """
-        Asychronous function to poll the APIs
-        """
+    async def async_get_traveltime(self, origin: Coordinates, destination: Coordinates):
         return await asyncio.get_event_loop().run_in_executor(
-            None, self.get_data, origin, destination
+            None, self.get_traveltime, origin, destination
         )
 
     async def test_credentials(self) -> bool:
