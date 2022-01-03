@@ -9,11 +9,10 @@ from .const import CONF_GMAPS_TOKEN
 from .const import CONF_NAME
 from .const import CONF_ORIGIN
 from .const import CONF_OSM_USERNAME
-from .const import DOMAIN  # pylint: disable=unused-import
 from .const import PLATFORMS
 
 
-class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+class JourneyFlowHandler(config_entries.ConfigFlow):
     """Config flow for journey."""
 
     VERSION = 2

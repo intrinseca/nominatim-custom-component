@@ -21,6 +21,7 @@ from homeassistant.helpers import location
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from OSMPythonTools.nominatim import NominatimResult
 
 from .api import JourneyApiClient
 from .const import CONF_DESTINATION
@@ -67,7 +68,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     for platform in PLATFORMS:
         if entry.options.get(platform, True):
-            coordinator.platforms.append(platform)
             hass.async_add_job(
                 hass.config_entries.async_forward_entry_setup(entry, platform)
             )
@@ -119,7 +119,7 @@ def get_location_from_attributes(entity):
 
 @dataclass
 class JourneyData:
-    origin_reverse_geocode: dict
+    origin_reverse_geocode: NominatimResult
     travel_time: dict
 
     @property
@@ -189,7 +189,6 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):
     ) -> None:
         """Initialize."""
         self.api = client
-        self.platforms = []
 
         self._origin_entity_id = origin
         self._destination_entity_id = destination
