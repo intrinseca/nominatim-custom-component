@@ -9,10 +9,11 @@ from .const import CONF_GMAPS_TOKEN
 from .const import CONF_NAME
 from .const import CONF_ORIGIN
 from .const import CONF_OSM_USERNAME
+from .const import DOMAIN
 from .const import PLATFORMS
 
 
-class JourneyFlowHandler(config_entries.ConfigFlow):
+class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
     """Config flow for journey."""
 
     VERSION = 2

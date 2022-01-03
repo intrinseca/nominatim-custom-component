@@ -53,11 +53,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     password = entry.data.get(CONF_GMAPS_TOKEN)
 
     origin = entry.data.get(CONF_ORIGIN)
-    destination = entry.data.get(CONF_DESTINATION)
+    destinations = entry.data.get(CONF_DESTINATION).split(",")
     client = JourneyApiClient(username, password)
 
     coordinator = JourneyDataUpdateCoordinator(
-        hass, client=client, origin=origin, destination=destination
+        hass, client=client, origin=origin, destinations=destinations
     )
     await coordinator.async_refresh()
 
@@ -69,7 +69,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     for platform in PLATFORMS:
         if entry.options.get(platform, True):
             hass.async_add_job(
-                hass.config_entries.async_forward_entry_setup(entry, platform)
+                hass.config_entries.async_forward_entry_setup(entry, platform)  # type: ignore
             )
 
     entry.add_update_listener(async_reload_entry)
@@ -118,18 +118,8 @@ def get_location_from_attributes(entity):
 
 
 @dataclass
-class JourneyData:
-    origin_reverse_geocode: NominatimResult
+class JourneyTravelTime:
     travel_time: dict
-
-    @property
-    def origin_address(self) -> str:
-        if self.origin_reverse_geocode is not None:
-            for key in ["village", "suburb", "town", "city", "state", "country"]:
-                if key in self.origin_reverse_geocode.address():
-                    return self.origin_reverse_geocode.address()[key]
-
-        return "Unknown"
 
     @property
     def travel_time_values(self) -> dict:
@@ -177,7 +167,22 @@ class JourneyData:
         return round(100 * self.delay / self.duration) if self.duration > 0 else 0
 
 
-class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):
+@dataclass
+class JourneyData:
+    origin_reverse_geocode: NominatimResult
+    travel_time: list[JourneyTravelTime]
+
+    @property
+    def origin_address(self) -> str:
+        if self.origin_reverse_geocode is not None:
+            for key in ["village", "suburb", "town", "city", "state", "country"]:
+                if key in self.origin_reverse_geocode.address():
+                    return self.origin_reverse_geocode.address()[key]
+
+        return "Unknown"
+
+
+class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type: ignore
     """Class to manage fetching data from the API."""
 
     def __init__(
@@ -185,13 +190,13 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):
         hass: HomeAssistant,
         client: JourneyApiClient,
         origin: str,
-        destination: str,
+        destinations: list[str],
     ) -> None:
         """Initialize."""
         self.api = client
 
         self._origin_entity_id = origin
-        self._destination_entity_id = destination
+        self._destination_entity_ids = destinations
 
         async_track_state_change_event(
             hass, self._origin_entity_id, self._handle_state_change
@@ -210,36 +215,38 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):
 
     async def update(self):
         """Update data via library."""
+        traveltime = [JourneyTravelTime(None)] * len(self._destination_entity_ids)
+
         try:
             origin = get_location_from_entity(
                 self.hass, _LOGGER, self._origin_entity_id
             )
 
-            destination = get_location_from_entity(
-                self.hass, _LOGGER, self._destination_entity_id
-            )
-
             if origin is not None:
                 address = await self.api.async_get_address(origin)
-
-                if destination is None:
-                    _LOGGER.error("Unable to get destination coordinates")
-                    traveltime = None
-                elif (
-                    self._destination_entity_id.startswith("zone")
-                    and self.hass.states.get(self._origin_entity_id)
-                    == self._destination_entity_id[5:]
-                ):
-                    _LOGGER.info("origin is equal to destination zone")
-
-                    traveltime = None
-                else:
-                    traveltime = await self.api.async_get_traveltime(
-                        origin, destination
-                    )
             else:
                 _LOGGER.error("Unable to get origin coordinates")
                 address = None
+
+            for idx, destination_entity_id in enumerate(self._destination_entity_ids):
+                destination = get_location_from_entity(
+                    self.hass, _LOGGER, destination_entity_id
+                )
+
+                if destination is None:
+                    _LOGGER.error("Unable to get destination coordinates")
+                elif (
+                    destination_entity_id.startswith("zone")
+                    and self.hass.states.get(self._origin_entity_id)
+                    == destination_entity_id[5:]
+                ):
+                    _LOGGER.info("origin is equal to destination zone")
+                else:
+                    traveltime[idx] = JourneyTravelTime(
+                        travel_time=await self.api.async_get_traveltime(
+                            origin, destination
+                        )
+                    )
 
             return JourneyData(address, traveltime)
         except Exception as exception:
