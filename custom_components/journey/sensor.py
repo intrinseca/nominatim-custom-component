@@ -15,10 +15,9 @@ async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_devices(
-        [JourneyLocationSensor(coordinator, entry)]
-        + [
-            JourneyTimeSensor(coordinator, entry, i, destination)
-            for i, destination in enumerate(entry.data.get(CONF_DESTINATION).split(","))
+        [
+            JourneyLocationSensor(coordinator, entry),
+            JourneyTimeSensor(coordinator, entry),
         ]
     )
 
@@ -67,11 +66,10 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     _attr_unit_of_measurement = TIME_MINUTES
     _attr_icon = "mdi:timer"
 
-    def __init__(self, coordinator, config_entry, destination_idx, destination):
+    def __init__(self, coordinator, config_entry):
         super().__init__(coordinator)
         self.config_entry = config_entry
-        self.destination = destination
-        self.destination_idx = destination_idx
+        self.destination = self.config_entry.data.get(CONF_DESTINATION)
 
     @property
     def destination_name(self):
@@ -89,28 +87,20 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     def extra_state_attributes(self):
         """Return the state attributes."""
 
-        raw_result = self.coordinator.data.travel_time[
-            self.destination_idx
-        ].travel_time_values
+        raw_result = self.coordinator.data.travel_time.travel_time_values
 
         return raw_result | {
-            "delay_minutes": self.coordinator.data.travel_time[
-                self.destination_idx
-            ].delay_min,
-            "delay_factor": self.coordinator.data.travel_time[
-                self.destination_idx
-            ].delay_factor,
+            "delay_minutes": self.coordinator.data.travel_time.delay_min,
+            "delay_factor": self.coordinator.data.travel_time.delay_factor,
         }
 
     @property
     def name(self):
         """Return the name of the sensor."""
         name = self.config_entry.data.get(CONF_NAME)
-        return f"{name} Travel Time to {self.destination_name}"
+        return f"{name} Travel Time"
 
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.coordinator.data.travel_time[
-            self.destination_idx
-        ].duration_in_traffic_min
+        return self.coordinator.data.travel_time.duration_in_traffic_min
