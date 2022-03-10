@@ -8,3 +8,6 @@ logger:
     homeassistant.setup: error
 # If you need to debug uncommment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
 debugpy:
+
+input_text:
+  destination:

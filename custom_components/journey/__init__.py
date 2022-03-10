@@ -11,13 +11,10 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_LATITUDE
-from homeassistant.const import ATTR_LONGITUDE
 from homeassistant.core import Config
 from homeassistant.core import Event
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import location
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -31,6 +28,8 @@ from .const import CONF_OSM_USERNAME
 from .const import DOMAIN
 from .const import PLATFORMS
 from .const import STARTUP_MESSAGE
+from .helpers import get_location_entity
+from .helpers import get_location_from_attributes
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
@@ -76,53 +75,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
-def get_location_from_entity(hass, logger, entity_id):
-    """Get the location from the entity state or attributes."""
-
-    if (entity := hass.states.get(entity_id)) is None:
-        logger.error("Locating %s: Unable to find", entity_id)
-        return None
-
-    # Check if device is in a zone
-    if not entity_id.startswith("zone"):
-        if (zone_entity := hass.states.get(f"zone.{entity.state}")) is not None:
-            if location.has_location(zone_entity):
-                logger.debug(
-                    "Locating %s: in %s, getting zone location",
-                    entity_id,
-                    zone_entity.entity_id,
-                )
-                return get_location_from_attributes(zone_entity)
-
-            logger.debug(
-                "Locating %s: in %s, no zone location",
-                entity_id,
-                zone_entity.entity_id,
-            )
-        else:
-            logger.debug("Locating %s: [zone '%s' not found]", entity_id, entity.state)
-
-    # Check if the entity has location attributes
-    if location.has_location(entity):
-        logger.debug("Locating %s: from attributes", entity_id)
-        return get_location_from_attributes(entity)
-
-    # When everything fails just return nothing
-    return None
-
-
-def get_location_from_attributes(entity):
-    """Get the lat/long string from an entities attributes."""
-    attr = entity.attributes
-    return (float(attr.get(ATTR_LATITUDE)), float(attr.get(ATTR_LONGITUDE)))
-
-
 @dataclass
 class JourneyTravelTime:
+    """Container for Journey time data"""
+
     travel_time: dict
+    destination: str
 
     @property
     def travel_time_values(self) -> dict:
+        """Flatten the travel time results dictionary"""
         if self.travel_time is None:
             return {}
 
@@ -130,6 +92,7 @@ class JourneyTravelTime:
 
     @property
     def duration(self):
+        """Get the nominal duration of the journey in seconds"""
         if self.travel_time_values is None:
             return float("nan")
 
@@ -137,10 +100,12 @@ class JourneyTravelTime:
 
     @property
     def duration_min(self):
+        """Get the nominal duration of the journey in minutes"""
         return round(self.duration / 60) if not math.isnan(self.duration) else None
 
     @property
     def duration_in_traffic(self):
+        """Get the current duration of the journey in seconds"""
         if self.travel_time_values is None:
             return float("nan")
 
@@ -148,6 +113,7 @@ class JourneyTravelTime:
 
     @property
     def duration_in_traffic_min(self):
+        """Get the current duration of the journey in minutes"""
         return (
             round(self.duration_in_traffic / 60)
             if not math.isnan(self.duration_in_traffic)
@@ -156,24 +122,30 @@ class JourneyTravelTime:
 
     @property
     def delay(self):
+        """Get the delay to the journey in seconds"""
         return self.duration_in_traffic - self.duration
 
     @property
     def delay_min(self):
+        """Get the delay to the journey in minutes"""
         return round(self.delay / 60) if not math.isnan(self.delay) else None
 
     @property
     def delay_factor(self):
+        """Get the delay to the journey as a percentage"""
         return round(100 * self.delay / self.duration) if self.duration > 0 else 0
 
 
 @dataclass
 class JourneyData:
+    """Hold the journey data pulled from the APIs"""
+
     origin_reverse_geocode: NominatimResult
-    travel_time: list[JourneyTravelTime]
+    travel_time: JourneyTravelTime
 
     @property
     def origin_address(self) -> str:
+        """Get the suitable address string from the reverse geocoding lookup"""
         if self.origin_reverse_geocode is not None:
             for key in ["village", "suburb", "town", "city", "state", "country"]:
                 if key in self.origin_reverse_geocode.address():
@@ -202,6 +174,10 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
             hass, self._origin_entity_id, self._handle_state_change
         )
 
+        async_track_state_change_event(
+            hass, self._destination_entity_id, self._handle_state_change
+        )
+
         super().__init__(
             hass,
             _LOGGER,
@@ -215,12 +191,11 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
 
     async def update(self):
         """Update data via library."""
-        traveltime = JourneyTravelTime(None)
+        traveltime = JourneyTravelTime(None, "")
 
         try:
-            origin = get_location_from_entity(
-                self.hass, _LOGGER, self._origin_entity_id
-            )
+            origin_entity = get_location_entity(self.hass, self._origin_entity_id)
+            origin = get_location_from_attributes(origin_entity)
 
             if origin is not None:
                 address = await self.api.async_get_address(origin)
@@ -228,19 +203,26 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
                 _LOGGER.error("Unable to get origin coordinates")
                 address = None
 
-            destination = get_location_from_entity(
-                self.hass, _LOGGER, self._destination_entity_id
+            destination_entity = get_location_entity(
+                self.hass, self._destination_entity_id
             )
 
-            if destination is None:
+            if destination_entity is None:
                 _LOGGER.error("Unable to get destination coordinates")
-            elif self.hass.states.get(
-                self._origin_entity_id
-            ) == self._destination_entity_id.replace("zone.", ""):
+            elif origin_entity.entity_id == destination_entity.entity_id:
                 _LOGGER.info("origin is equal to destination zone")
-            else:
                 traveltime = JourneyTravelTime(
-                    travel_time=await self.api.async_get_traveltime(origin, destination)
+                    {"duration": {"value": 0}, "duration_in_traffic": {"value": 0}},
+                    origin_entity.name,
+                )
+            else:
+                destination = get_location_from_attributes(destination_entity)
+                destination_name = destination_entity.name
+                traveltime = JourneyTravelTime(
+                    travel_time=await self.api.async_get_traveltime(
+                        origin, destination
+                    ),
+                    destination=destination_name,
                 )
 
             return JourneyData(address, traveltime)

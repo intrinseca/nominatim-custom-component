@@ -1,7 +1,6 @@
 """Sensor platform for Journey."""
 from homeassistant.const import TIME_MINUTES
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.util import slugify
 
 from . import JourneyData
 from .const import ATTRIBUTION
@@ -81,7 +80,7 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return self.config_entry.entry_id + "-" + slugify(self.destination) + "-time"
+        return self.config_entry.entry_id + "-time"
 
     @property
     def extra_state_attributes(self):
@@ -92,6 +91,7 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
         return raw_result | {
             "delay_minutes": self.coordinator.data.travel_time.delay_min,
             "delay_factor": self.coordinator.data.travel_time.delay_factor,
+            "destination": self.coordinator.data.travel_time.destination,
         }
 
     @property
