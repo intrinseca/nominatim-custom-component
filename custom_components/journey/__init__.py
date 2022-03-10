@@ -15,6 +15,7 @@ from homeassistant.core import Config
 from homeassistant.core import Event
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -184,6 +185,9 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
             name=DOMAIN,
             update_interval=SCAN_INTERVAL,
             update_method=self.update,
+            request_refresh_debouncer=Debouncer(
+                hass, _LOGGER, cooldown=1800, immediate=False
+            ),
         )
 
     async def _handle_state_change(self, event: Event):
