@@ -1,16 +1,18 @@
 """Adds config flow for Journey."""
-import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
+import voluptuous as vol
 
 from .api import JourneyApiClient
-from .const import CONF_DESTINATION
-from .const import CONF_GMAPS_TOKEN
-from .const import CONF_NAME
-from .const import CONF_ORIGIN
-from .const import CONF_OSM_USERNAME
-from .const import DOMAIN
-from .const import PLATFORMS
+from .const import (
+    CONF_DESTINATION,
+    CONF_GMAPS_TOKEN,
+    CONF_NAME,
+    CONF_ORIGIN,
+    CONF_OSM_USERNAME,
+    DOMAIN,
+    PLATFORMS,
+)
 
 
 class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore

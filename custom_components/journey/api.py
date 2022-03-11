@@ -1,10 +1,10 @@
 """Sample API Client."""
 import asyncio
-import logging
 from datetime import datetime
+import logging
 
-from googlemaps import Client
 from OSMPythonTools.nominatim import Nominatim
+from googlemaps import Client
 
 TIMEOUT = 10
 

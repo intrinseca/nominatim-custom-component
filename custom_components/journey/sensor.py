@@ -3,11 +3,7 @@ from homeassistant.const import TIME_MINUTES
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import JourneyData
-from .const import ATTRIBUTION
-from .const import CONF_DESTINATION
-from .const import CONF_NAME
-from .const import DOMAIN
-from .const import ICON
+from .const import ATTRIBUTION, CONF_DESTINATION, CONF_NAME, DOMAIN, ICON
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
@@ -36,10 +32,13 @@ class JourneyLocationSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        return self.coordinator.data.origin_reverse_geocode.address() | {
-            "attribution": ATTRIBUTION,
-            "full_address": self.coordinator.data.origin_reverse_geocode.displayName(),
-        }
+        if self.coordinator.data:
+            return self.coordinator.data.origin_reverse_geocode.address() | {
+                "attribution": ATTRIBUTION,
+                "full_address": self.coordinator.data.origin_reverse_geocode.displayName(),
+            }
+        else:
+            return {}
 
     @property
     def name(self):
@@ -51,7 +50,10 @@ class JourneyLocationSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.coordinator.data.origin_address
+        if self.coordinator.data:
+            return self.coordinator.data.origin_address
+        else:
+            return None
 
     @property
     def icon(self):
@@ -85,6 +87,8 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
+        if not self.coordinator.data:
+            return {}
 
         raw_result = self.coordinator.data.travel_time.travel_time_values
 
@@ -103,4 +107,7 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.coordinator.data.travel_time.duration_in_traffic_min
+        if self.coordinator.data:
+            return self.coordinator.data.travel_time.duration_in_traffic_min
+        else:
+            return None

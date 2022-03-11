@@ -3,8 +3,7 @@ Helpers for handling location entities
 """
 import logging
 
-from homeassistant.const import ATTR_LATITUDE
-from homeassistant.const import ATTR_LONGITUDE
+from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
 from homeassistant.helpers import location
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)

@@ -5,31 +5,29 @@ For more details about this integration, please refer to
 https://github.com/intrinseca/journey
 """
 import asyncio
-import logging
-import math
 from dataclasses import dataclass
 from datetime import timedelta
+import logging
+import math
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Config
-from homeassistant.core import Event
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.helpers.update_coordinator import UpdateFailed
 from OSMPythonTools.nominatim import NominatimResult
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import Config, Event, HomeAssistant
+from homeassistant.helpers.debounce import Debouncer
+from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import JourneyApiClient
-from .const import CONF_DESTINATION
-from .const import CONF_GMAPS_TOKEN
-from .const import CONF_ORIGIN
-from .const import CONF_OSM_USERNAME
-from .const import DOMAIN
-from .const import PLATFORMS
-from .const import STARTUP_MESSAGE
-from .helpers import get_location_entity
-from .helpers import get_location_from_attributes
+from .const import (
+    CONF_DESTINATION,
+    CONF_GMAPS_TOKEN,
+    CONF_ORIGIN,
+    CONF_OSM_USERNAME,
+    DOMAIN,
+    PLATFORMS,
+    STARTUP_MESSAGE,
+)
+from .helpers import get_location_entity, get_location_from_attributes
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
@@ -58,10 +56,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     coordinator = JourneyDataUpdateCoordinator(
         hass, client=client, origin=origin, destination=destination
     )
-    await coordinator.async_refresh()
-
-    if not coordinator.last_update_success:
-        raise ConfigEntryNotReady
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
@@ -165,17 +159,18 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
         destination: str,
     ) -> None:
         """Initialize."""
+
         self.api = client
 
         self._origin_entity_id = origin
         self._destination_entity_id = destination
 
         async_track_state_change_event(
-            hass, self._origin_entity_id, self._handle_state_change
+            hass, self._origin_entity_id, self._handle_origin_state_change
         )
 
         async_track_state_change_event(
-            hass, self._destination_entity_id, self._handle_state_change
+            hass, self._destination_entity_id, self._handle_destination_state_change
         )
 
         super().__init__(
@@ -184,15 +179,24 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
             name=DOMAIN,
             update_interval=SCAN_INTERVAL,
             update_method=self.update,
+            request_refresh_debouncer=Debouncer(
+                hass, _LOGGER, cooldown=1800, immediate=True
+            ),
         )
 
-    async def _handle_state_change(self, event: Event):
-        await self.async_request_refresh()
+    async def _handle_origin_state_change(self, event: Event):
+        if event.data["old_state"].state == event.data["new_state"].state:
+            _LOGGER.debug("Origin updated without state change, requesting refresh")
+            await self.async_request_refresh()
+        else:
+            _LOGGER.debug("Origin updated *with* state change, forcing refresh")
+            await self.async_refresh()
+
+    async def _handle_destination_state_change(self, event: Event):
+        await self.async_refresh()
 
     async def update(self):
         """Update data via library."""
-        traveltime = JourneyTravelTime(None, "")
-
         try:
             origin_entity = get_location_entity(self.hass, self._origin_entity_id)
             origin = get_location_from_attributes(origin_entity)
@@ -209,6 +213,7 @@ class JourneyDataUpdateCoordinator(DataUpdateCoordinator[JourneyData]):  # type:
 
             if destination_entity is None:
                 _LOGGER.error("Unable to get destination coordinates")
+                traveltime = JourneyTravelTime(None, None)
             elif origin_entity.entity_id == destination_entity.entity_id:
                 _LOGGER.info("origin is equal to destination zone")
                 traveltime = JourneyTravelTime(
