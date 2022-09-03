@@ -2,7 +2,6 @@
   "config": {
     "step": {
       "user": {
-        "title": "Journey",
         "description": "Configure the API access and origin/destination points",
         "data": {
           "osm_username": "OSM Username (Email address)",
