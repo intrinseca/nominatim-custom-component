@@ -1,17 +1,12 @@
 {
   "domain": "journey",
   "name": "Journey",
-	"codeowners": [
-		"@intrinseca"
-	],
-	"config_flow": true,
-	"dependencies": [],
-	"documentation": "https://github.com/intrinseca/journey",
-	"iot_class": "cloud_polling",
-	"issue_tracker": "https://github.com/intrinseca/journey/issues",
-	"requirements": [
-		"OSMPythonTools==0.3.3",
-		"googlemaps==2.5.1"
-	],
-	"version": "0.1.0"
+  "codeowners": ["@intrinseca"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/intrinseca/journey",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/intrinseca/journey/issues",
+  "requirements": ["OSMPythonTools==0.3.3", "googlemaps==2.5.1"],
+  "version": "0.1.0"
 }
