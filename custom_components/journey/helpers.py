@@ -1,6 +1,4 @@
-"""
-Helpers for handling location entities
-"""
+"""Helpers for handling location entities."""
 import logging
 
 from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE

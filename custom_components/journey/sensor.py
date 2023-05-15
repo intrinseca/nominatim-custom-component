@@ -7,7 +7,7 @@ from .const import ATTRIBUTION, CONF_DESTINATION, CONF_NAME, DOMAIN, ICON
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
-    """Setup sensor platform."""
+    """Set up sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_devices(
         [
@@ -21,6 +21,7 @@ class JourneyLocationSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     """Journey Location Sensor class."""
 
     def __init__(self, coordinator, config_entry):
+        """Create location sensor."""
         super().__init__(coordinator)
         self.config_entry = config_entry
 
@@ -62,18 +63,20 @@ class JourneyLocationSensor(CoordinatorEntity[JourneyData]):  # type: ignore
 
 
 class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
-    """Journey Travel Time Sensor Class"""
+    """Journey Travel Time Sensor Class."""
 
     _attr_unit_of_measurement = TIME_MINUTES
     _attr_icon = "mdi:timer"
 
     def __init__(self, coordinator, config_entry):
+        """Create journey time sensor."""
         super().__init__(coordinator)
         self.config_entry = config_entry
         self.destination = self.config_entry.data.get(CONF_DESTINATION)
 
     @property
     def destination_name(self):
+        """The name of the destination zone."""
         if (dest_state := self.hass.states.get(self.destination)) is not None:
             return dest_state.name
 

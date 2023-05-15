@@ -15,9 +15,10 @@ Coordinates = tuple[float, float]
 
 
 class JourneyApiClient:
-    """API client for the OSM Nominatim and Google Travel Time APIs"""
+    """API client for the OSM Nominatim and Google Travel Time APIs."""
 
     def __init__(self, osm_username: str, gmaps_token: str) -> None:
+        """Initialise the API client."""
         self._osm_username = osm_username
         self._gmaps_token = gmaps_token
 
@@ -28,8 +29,7 @@ class JourneyApiClient:
         )
 
     def get_address(self, location: Coordinates):
-        """
-        Get the address based on a (lat, long) tuple.
+        """Get the address based on a (lat, long) tuple.
 
         This function is used as a sync wrapper to the Nominatim API
         """
@@ -42,11 +42,13 @@ class JourneyApiClient:
             return None
 
     async def async_get_address(self, location: Coordinates):
+        """Get address corresponding to location using OSM."""
         return await asyncio.get_event_loop().run_in_executor(
             None, self.get_address, location
         )
 
     def get_traveltime(self, origin: Coordinates, destination: Coordinates):
+        """Get the travel time from origin to destination using Google Maps."""
         try:
             result = self._gmaps_client.distance_matrix(
                 origins=[origin],
@@ -60,12 +62,13 @@ class JourneyApiClient:
             return None
 
     async def async_get_traveltime(self, origin: Coordinates, destination: Coordinates):
+        """Get the travel time from origin to destination using Google Maps."""
         return await asyncio.get_event_loop().run_in_executor(
             None, self.get_traveltime, origin, destination
         )
 
     async def test_credentials(self) -> bool:
-        """Check the Google Maps API credentials"""
+        """Check the Google Maps API credentials."""
 
         def test_api():
             try:

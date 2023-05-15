@@ -1,5 +1,4 @@
-"""
-Custom integration to integrate Journey with Home Assistant.
+"""Custom integration to integrate Journey with Home Assistant.
 
 For more details about this integration, please refer to
 https://github.com/intrinseca/journey
@@ -71,14 +70,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 @dataclass
 class JourneyTravelTime:
-    """Container for Journey time data"""
+    """Container for Journey time data."""
 
     travel_time: dict
     destination: str
 
     @property
     def travel_time_values(self) -> dict:
-        """Flatten the travel time results dictionary"""
+        """Flatten the travel time results dictionary."""
         if self.travel_time is None:
             return {}
 
@@ -86,7 +85,7 @@ class JourneyTravelTime:
 
     @property
     def duration(self):
-        """Get the nominal duration of the journey in seconds"""
+        """Get the nominal duration of the journey in seconds."""
         if self.travel_time_values is None:
             return float("nan")
 
@@ -94,12 +93,12 @@ class JourneyTravelTime:
 
     @property
     def duration_min(self):
-        """Get the nominal duration of the journey in minutes"""
+        """Get the nominal duration of the journey in minutes."""
         return round(self.duration / 60) if not math.isnan(self.duration) else None
 
     @property
     def duration_in_traffic(self):
-        """Get the current duration of the journey in seconds"""
+        """Get the current duration of the journey in seconds."""
         if self.travel_time_values is None:
             return float("nan")
 
@@ -107,7 +106,7 @@ class JourneyTravelTime:
 
     @property
     def duration_in_traffic_min(self):
-        """Get the current duration of the journey in minutes"""
+        """Get the current duration of the journey in minutes."""
         return (
             round(self.duration_in_traffic / 60)
             if not math.isnan(self.duration_in_traffic)
@@ -116,30 +115,30 @@ class JourneyTravelTime:
 
     @property
     def delay(self):
-        """Get the delay to the journey in seconds"""
+        """Get the delay to the journey in seconds."""
         return self.duration_in_traffic - self.duration
 
     @property
     def delay_min(self):
-        """Get the delay to the journey in minutes"""
+        """Get the delay to the journey in minutes."""
         return round(self.delay / 60) if not math.isnan(self.delay) else None
 
     @property
     def delay_factor(self):
-        """Get the delay to the journey as a percentage"""
+        """Get the delay to the journey as a percentage."""
         return round(100 * self.delay / self.duration) if self.duration > 0 else 0
 
 
 @dataclass
 class JourneyData:
-    """Hold the journey data pulled from the APIs"""
+    """Hold the journey data pulled from the APIs."""
 
     origin_reverse_geocode: NominatimResult
     travel_time: JourneyTravelTime
 
     @property
     def origin_address(self) -> str:
-        """Get the suitable address string from the reverse geocoding lookup"""
+        """Get the suitable address string from the reverse geocoding lookup."""
         if self.origin_reverse_geocode is not None:
             for key in ["village", "suburb", "town", "city", "state", "country"]:
                 if key in self.origin_reverse_geocode.address():

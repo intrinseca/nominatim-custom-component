@@ -5,3 +5,5 @@ pythonenv*
 venv
 .venv
 cache/*
+config/*
+!config/configuration.yaml

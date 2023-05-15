@@ -51,6 +51,7 @@ class JourneyFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ign
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
+        """Get options flow."""
         return JourneyOptionsFlowHandler(config_entry)
 
     async def _show_config_form(self, user_input):  # pylint: disable=unused-argument

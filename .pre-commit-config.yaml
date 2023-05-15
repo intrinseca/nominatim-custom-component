@@ -6,17 +6,17 @@ repos:
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    # Ruff version.
+    rev: "v0.0.267"
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
   - repo: local
     hooks:
       - id: black
         name: black
         entry: black
-        language: system
-        types: [python]
-        require_serial: true
-      - id: flake8
-        name: flake8
-        entry: flake8
         language: system
         types: [python]
         require_serial: true
