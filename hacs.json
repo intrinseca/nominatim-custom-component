@@ -1,6 +1,4 @@
 {
   "name": "Journey",
-  "domains": ["binary_sensor", "sensor", "switch"],
-  "iot_class": "Cloud Polling",
   "homeassistant": "2023.3.0"
 }
