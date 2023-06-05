@@ -11,3 +11,10 @@ debugpy:
 
 input_text:
   destination:
+
+homeassistant:
+  auth_providers:
+    - type: homeassistant
+    - type: trusted_networks
+      trusted_networks:
+        - 127.0.0.1/32
