@@ -1,4 +1,6 @@
 """Sensor platform for Journey."""
+from datetime import datetime, timedelta
+
 from homeassistant.const import TIME_MINUTES
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -99,6 +101,12 @@ class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
             "delay_minutes": self.coordinator.data.travel_time.delay_min,
             "delay_factor": self.coordinator.data.travel_time.delay_factor,
             "destination": self.coordinator.data.travel_time.destination,
+            "eta": (
+                datetime.now().astimezone()
+                + timedelta(
+                    minutes=self.coordinator.data.travel_time.duration_in_traffic_min
+                )
+            ).isoformat(),
         }
 
     @property
