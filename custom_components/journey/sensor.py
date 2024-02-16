@@ -1,7 +1,7 @@
 """Sensor platform for Journey."""
 from datetime import datetime, timedelta
 
-from homeassistant.const import TIME_MINUTES
+from homeassistant.const import UnitOfTime
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import JourneyData
@@ -67,7 +67,7 @@ class JourneyLocationSensor(CoordinatorEntity[JourneyData]):  # type: ignore
 class JourneyTimeSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     """Journey Travel Time Sensor Class."""
 
-    _attr_unit_of_measurement = TIME_MINUTES
+    _attr_unit_of_measurement = UnitOfTime.MINUTES
     _attr_icon = "mdi:timer"
 
     def __init__(self, coordinator, config_entry):
