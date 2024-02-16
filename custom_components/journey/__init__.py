@@ -4,12 +4,12 @@ For more details about this integration, please refer to
 https://github.com/intrinseca/journey
 """
 import asyncio
-from dataclasses import dataclass
-from datetime import timedelta
 import logging
 import math
+from dataclasses import dataclass
+from datetime import timedelta
 
-from OSMPythonTools.nominatim import NominatimResult
+from geopy.location import Location
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, Event, HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
@@ -133,7 +133,7 @@ class JourneyTravelTime:
 class JourneyData:
     """Hold the journey data pulled from the APIs."""
 
-    origin_reverse_geocode: NominatimResult
+    origin_reverse_geocode: Location
     travel_time: JourneyTravelTime
 
     @property
@@ -141,8 +141,8 @@ class JourneyData:
         """Get the suitable address string from the reverse geocoding lookup."""
         if self.origin_reverse_geocode is not None:
             for key in ["village", "suburb", "town", "city", "state", "country"]:
-                if key in self.origin_reverse_geocode.address():
-                    return self.origin_reverse_geocode.address()[key]
+                if key in self.origin_reverse_geocode.raw["address"]:
+                    return self.origin_reverse_geocode.raw["address"][key]
 
         return "Unknown"
 

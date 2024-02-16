@@ -35,10 +35,9 @@ class JourneyLocationSensor(CoordinatorEntity[JourneyData]):  # type: ignore
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        if self.coordinator.data:
-            return self.coordinator.data.origin_reverse_geocode.address() | {
+        if self.coordinator.data.origin_reverse_geocode is not None:
+            return self.coordinator.data.origin_reverse_geocode.raw["address"] | {
                 "attribution": ATTRIBUTION,
-                "full_address": self.coordinator.data.origin_reverse_geocode.displayName(),
             }
         else:
             return {}
