@@ -2,28 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "description": "Configure the API access and origin/destination points",
+        "description": "Configure the API access and source entity",
         "data": {
           "osm_username": "OSM Username (Email address)",
-          "gmaps_token": "Google Maps API token",
-          "origin": "Origin",
-          "destination": "Destination",
+          "source": "Source Entity ID",
           "name": "Sensor Name"
-        }
-      }
-    },
-    "error": {
-      "auth": "Username/Password is wrong."
-    },
-    "abort": {
-      "single_instance_allowed": "Only a single instance is allowed."
-    }
-  },
-  "options": {
-    "step": {
-      "user": {
-        "data": {
-          "sensor": "Sensor enabled"
         }
       }
     }

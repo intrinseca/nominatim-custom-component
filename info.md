@@ -29,14 +29,14 @@ Custom component for performing reverse geocoding via the OpenStreetMap Nominati
 
 [buymecoffee]: https://www.buymeacoffee.com/intrinseca
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/intrinseca/journey-custom-component.svg?style=for-the-badge
-[commits]: https://github.com/intrinseca/journey-custom-component/commits/main
+[commits-shield]: https://img.shields.io/github/commit-activity/y/intrinseca/nominatim-custom-component.svg?style=for-the-badge
+[commits]: https://github.com/intrinseca/nominatim-custom-component/commits/main
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[license-shield]: https://img.shields.io/github/license/intrinseca/journey-custom-component.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/intrinseca/nominatim-custom-component.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-%40intrinseca-blue.svg?style=for-the-badge
 [pre-commit]: https://github.com/pre-commit/pre-commit
 [pre-commit-shield]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/intrinseca/journey-custom-component.svg?style=for-the-badge
-[releases]: https://github.com/intrinseca/journey-custom-component/releases
+[releases-shield]: https://img.shields.io/github/release/intrinseca/nominatim-custom-component.svg?style=for-the-badge
+[releases]: https://github.com/intrinseca/nominatim-custom-component/releases
 [user_profile]: https://github.com/intrinseca
