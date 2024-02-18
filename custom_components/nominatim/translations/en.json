@@ -5,8 +5,7 @@
         "description": "Configure the API access and source entity",
         "data": {
           "osm_username": "OSM Username (Email address)",
-          "source": "Source Entity ID",
-          "name": "Sensor Name"
+          "source": "Source Entity ID"
         }
       }
     }

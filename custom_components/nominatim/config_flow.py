@@ -3,7 +3,6 @@ import voluptuous as vol
 from homeassistant import config_entries
 
 from .const import (
-    CONF_NAME,
     CONF_OSM_USERNAME,
     CONF_SOURCE,
     DOMAIN,
@@ -25,7 +24,9 @@ class NominatimFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: i
         self._errors = {}
 
         if user_input is not None:
-            return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
+            return self.async_create_entry(
+                title=f"{user_input[CONF_SOURCE]} Nominatim", data=user_input
+            )
 
         return await self._show_config_form(user_input)
 
@@ -35,7 +36,6 @@ class NominatimFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: i
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_NAME): str,
                     vol.Required(CONF_SOURCE): str,
                     vol.Required(CONF_OSM_USERNAME): str,
                 }

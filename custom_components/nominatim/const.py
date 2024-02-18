@@ -18,7 +18,6 @@ PLATFORMS = [SENSOR]
 
 # Configuration and options
 CONF_ENABLED = "enabled"
-CONF_NAME = "name"
 CONF_OSM_USERNAME = "osm_username"
 CONF_SOURCE = "source"
 
