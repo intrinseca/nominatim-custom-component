@@ -10,7 +10,7 @@ ATTRIBUTION = "Map data © OpenStreetMap contributors"
 ISSUE_URL = "https://github.com/intrinseca/nominatim-custom-component/issues"
 
 # Icons
-ICON = "mdi:map-marker-right"
+ICON = "mdi:map-search"
 
 # Platforms
 SENSOR = "sensor"
