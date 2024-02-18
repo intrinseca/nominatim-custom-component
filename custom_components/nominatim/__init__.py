@@ -10,6 +10,7 @@ from datetime import timedelta
 
 from geopy.location import Location
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
 from homeassistant.core import Config, Event, HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event
@@ -22,7 +23,6 @@ from .const import (
     DOMAIN,
     PLATFORMS,
 )
-from .helpers import get_location_from_attributes
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
@@ -74,6 +74,12 @@ class NominatimData:
                     return self.origin_reverse_geocode.raw["address"][key]
 
         return "Unknown"
+
+
+def get_location_from_attributes(entity):
+    """Get the lat/long string from an entities attributes."""
+    attr = entity.attributes
+    return (float(attr.get(ATTR_LATITUDE)), float(attr.get(ATTR_LONGITUDE)))
 
 
 class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):  # type: ignore
