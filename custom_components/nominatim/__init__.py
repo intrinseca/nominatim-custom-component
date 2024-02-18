@@ -114,8 +114,12 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):  # t
 
     async def _handle_origin_state_change(self, event: Event):
         if event.data["old_state"].state == event.data["new_state"].state:
-            _LOGGER.debug("Origin updated without state change, requesting refresh")
-            await self.async_request_refresh()
+            if self.data is None:
+                _LOGGER.debug("Origin updated, no current state, forcing refresh")
+                await self.async_refresh()
+            else:
+                _LOGGER.debug("Origin updated without state change, requesting refresh")
+                await self.async_request_refresh()
         else:
             _LOGGER.debug("Origin updated *with* state change, forcing refresh")
             await self.async_refresh()
