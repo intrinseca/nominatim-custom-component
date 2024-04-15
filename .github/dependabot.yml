@@ -7,7 +7,7 @@ updates:
     groups:
       gh:
         patterns:
-          - '*'
+          - "*"
   - package-ecosystem: pip
     directory: "/.github/workflows"
     schedule:
@@ -15,7 +15,7 @@ updates:
     groups:
       pip:
         patterns:
-          - '*'
+          - "*"
   - package-ecosystem: pip
     directory: "/"
     schedule:
@@ -23,5 +23,4 @@ updates:
     groups:
       pip:
         patterns:
-          - '*'
-          
+          - "*"
