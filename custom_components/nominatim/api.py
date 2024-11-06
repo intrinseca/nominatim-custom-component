@@ -1,4 +1,5 @@
 """Nominatim API Client."""
+
 import logging
 from collections import OrderedDict
 from typing import cast

@@ -3,6 +3,7 @@
 For more details about this integration, please refer to
 https://github.com/intrinseca/nominatim-custom-component
 """
+
 import asyncio
 import logging
 from dataclasses import dataclass
@@ -45,8 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     source = entry.data.get(CONF_SOURCE)
     client = NominatimApiClient(username)
 
-    coordinator = NominatimDataUpdateCoordinator(
-        hass, client=client, source=source)
+    coordinator = NominatimDataUpdateCoordinator(hass, client=client, source=source)
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
@@ -113,16 +113,13 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):
     async def _handle_origin_state_change(self, event: Event):
         if event.data["old_state"].state == event.data["new_state"].state:
             if self.data is None:
-                _LOGGER.debug(
-                    "Origin updated, no current state, forcing refresh")
+                _LOGGER.debug("Origin updated, no current state, forcing refresh")
                 await self.async_refresh()
             else:
-                _LOGGER.debug(
-                    "Origin updated without state change, requesting refresh")
+                _LOGGER.debug("Origin updated without state change, requesting refresh")
                 await self.async_request_refresh()
         else:
-            _LOGGER.debug(
-                "Origin updated *with* state change, forcing refresh")
+            _LOGGER.debug("Origin updated *with* state change, forcing refresh")
             await self.async_refresh()
 
     async def update(self):

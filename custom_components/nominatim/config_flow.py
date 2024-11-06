@@ -1,4 +1,5 @@
 """Adds config flow for Nominatim."""
+
 import voluptuous as vol
 from homeassistant import config_entries
 
