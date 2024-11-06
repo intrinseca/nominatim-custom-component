@@ -11,10 +11,10 @@ from datetime import timedelta
 
 from geopy.location import Location
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.location import find_coordinates
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import NominatimApiClient
@@ -65,15 +65,6 @@ class NominatimData:
                     return self.origin_reverse_geocode.raw["address"][key]
 
         return "Unknown"
-
-
-def get_location_from_attributes(entity):
-    """Get the lat/long string from an entities attributes."""
-    attr = entity.attributes
-    try:
-        return (float(attr.get(ATTR_LATITUDE)), float(attr.get(ATTR_LONGITUDE)))
-    except ValueError:
-        return None
 
 
 # type: ignore
@@ -132,19 +123,27 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):
         """Update data via library."""
         try:
             source_entity = self.hass.states.get(self._source_entity_id)
-            source = get_location_from_attributes(source_entity)
+            source_coords = find_coordinates(source_entity)
 
-            if source is not None:
-                address = await self.api.async_get_address(source)
-            else:
-                _LOGGER.error(
-                    "Unable to get source coordinates from %s", self._source_entity_id
+            if source_coords is None:
+                raise UpdateFailed(
+                    f"Unable to find coordinates from {self._source_entity_id}, state {source_coords.state}, got None"
                 )
-                address = None
 
-            return NominatimData(address)
+            match source_coords.split(","):
+                case lat, long:
+                    try:
+                        return NominatimData(
+                            await self.api.async_get_address((float(lat), float(long)))
+                        )
+                    except ValueError:
+                        pass
+
+            raise UpdateFailed(
+                f"Unable to find coordinates from {self._source_entity_id}, state {source_coords.state}, got '{source_coords}'"
+            )
         except Exception as exception:
-            raise UpdateFailed(str(exception)) from exception
+            raise UpdateFailed(repr(exception)) from exception
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
