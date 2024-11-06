@@ -12,7 +12,7 @@ from datetime import timedelta
 from geopy.location import Location
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
-from homeassistant.core import Config, Event, HomeAssistant
+from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -28,12 +28,6 @@ from .const import (
 SCAN_INTERVAL = timedelta(minutes=5)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
-
-
-# pylint: disable=unused-argument
-async def async_setup(hass: HomeAssistant, config: Config):
-    """Set up this integration using YAML is not supported."""
-    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
