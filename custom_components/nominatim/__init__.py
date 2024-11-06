@@ -45,15 +45,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     source = entry.data.get(CONF_SOURCE)
     client = NominatimApiClient(username)
 
-    coordinator = NominatimDataUpdateCoordinator(hass, client=client, source=source)
+    coordinator = NominatimDataUpdateCoordinator(
+        hass, client=client, source=source)
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    for platform in PLATFORMS:
-        if entry.options.get(platform, True):
-            hass.async_add_job(
-                hass.config_entries.async_forward_entry_setup(entry, platform)  # type: ignore
-            )
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     entry.add_update_listener(async_reload_entry)
     return True
