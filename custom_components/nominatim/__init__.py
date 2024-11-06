@@ -122,12 +122,12 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):
     async def update(self):
         """Update data via library."""
         try:
-            source_entity = self.hass.states.get(self._source_entity_id)
-            source_coords = find_coordinates(self.hass, source_entity)
+            source_state = self.hass.states.get(self._source_entity_id).state
+            source_coords = find_coordinates(self.hass, self._source_entity_id)
 
             if source_coords is None:
                 raise UpdateFailed(
-                    f"Unable to find coordinates from {self._source_entity_id}, state {source_coords.state}, got None"
+                    f"Unable to find coordinates from {self._source_entity_id}, state {source_state}, got None"
                 )
 
             match source_coords.split(","):
@@ -140,7 +140,7 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):
                         pass
 
             raise UpdateFailed(
-                f"Unable to find coordinates from {self._source_entity_id}, state {source_coords.state}, got '{source_coords}'"
+                f"Unable to find coordinates from {self._source_entity_id}, state {source_state}, got '{source_coords}'"
             )
         except Exception as exception:
             raise UpdateFailed(repr(exception)) from exception
