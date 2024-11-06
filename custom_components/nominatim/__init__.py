@@ -79,7 +79,8 @@ def get_location_from_attributes(entity):
     return (float(attr.get(ATTR_LATITUDE)), float(attr.get(ATTR_LONGITUDE)))
 
 
-class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):  # type: ignore
+# type: ignore
+class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):
     """Class to manage fetching data from the API."""
 
     def __init__(
@@ -112,13 +113,16 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):  # t
     async def _handle_origin_state_change(self, event: Event):
         if event.data["old_state"].state == event.data["new_state"].state:
             if self.data is None:
-                _LOGGER.debug("Origin updated, no current state, forcing refresh")
+                _LOGGER.debug(
+                    "Origin updated, no current state, forcing refresh")
                 await self.async_refresh()
             else:
-                _LOGGER.debug("Origin updated without state change, requesting refresh")
+                _LOGGER.debug(
+                    "Origin updated without state change, requesting refresh")
                 await self.async_request_refresh()
         else:
-            _LOGGER.debug("Origin updated *with* state change, forcing refresh")
+            _LOGGER.debug(
+                "Origin updated *with* state change, forcing refresh")
             await self.async_refresh()
 
     async def update(self):
@@ -135,7 +139,7 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):  # t
 
             return NominatimData(address)
         except Exception as exception:
-            raise UpdateFailed() from exception
+            raise UpdateFailed(str(exception)) from exception
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
