@@ -70,7 +70,10 @@ class NominatimData:
 def get_location_from_attributes(entity):
     """Get the lat/long string from an entities attributes."""
     attr = entity.attributes
-    return (float(attr.get(ATTR_LATITUDE)), float(attr.get(ATTR_LONGITUDE)))
+    try:
+        return (float(attr.get(ATTR_LATITUDE)), float(attr.get(ATTR_LONGITUDE)))
+    except ValueError:
+        return None
 
 
 # type: ignore
@@ -107,13 +110,22 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):
     async def _handle_origin_state_change(self, event: Event):
         if event.data["old_state"].state == event.data["new_state"].state:
             if self.data is None:
-                _LOGGER.debug("Origin updated, no current state, forcing refresh")
+                _LOGGER.debug(
+                    "Origin %s updated, no previous data, forcing refresh",
+                    self._source_entity_id,
+                )
                 await self.async_refresh()
             else:
-                _LOGGER.debug("Origin updated without state change, requesting refresh")
+                _LOGGER.debug(
+                    "Origin %s updated without state change, requesting refresh",
+                    self._source_entity_id,
+                )
                 await self.async_request_refresh()
         else:
-            _LOGGER.debug("Origin updated *with* state change, forcing refresh")
+            _LOGGER.debug(
+                "Origin %s updated *with* state change, forcing refresh",
+                self._source_entity_id,
+            )
             await self.async_refresh()
 
     async def update(self):
@@ -125,7 +137,9 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):
             if source is not None:
                 address = await self.api.async_get_address(source)
             else:
-                _LOGGER.error("Unable to get source coordinates")
+                _LOGGER.error(
+                    "Unable to get source coordinates from %s", self._source_entity_id
+                )
                 address = None
 
             return NominatimData(address)
