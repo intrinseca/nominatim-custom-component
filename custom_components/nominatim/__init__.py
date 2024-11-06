@@ -123,7 +123,7 @@ class NominatimDataUpdateCoordinator(DataUpdateCoordinator[NominatimData]):
         """Update data via library."""
         try:
             source_entity = self.hass.states.get(self._source_entity_id)
-            source_coords = find_coordinates(source_entity)
+            source_coords = find_coordinates(self.hass, source_entity)
 
             if source_coords is None:
                 raise UpdateFailed(
