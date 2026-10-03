@@ -30,6 +30,13 @@ Custom component for performing reverse geocoding via the OpenStreetMap Nominati
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 
+Run the unit tests with Python 3.14 (they use lightweight Home Assistant stand-ins and do not make network requests):
+
+```sh
+python -m pip install -r tests/requirements.txt "$(python -c 'import json; print(json.load(open("custom_components/nominatim/manifest.json"))["requirements"][0])')"
+python -m pytest tests/
+```
+
 ---
 
 [buymecoffee]: https://www.buymeacoffee.com/intrinseca
