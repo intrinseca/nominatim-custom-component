@@ -4,7 +4,7 @@
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE)
 
-[![pre-commit][pre-commit-shield]][pre-commit]
+[![prek][prek-shield]][prek]
 
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
@@ -35,8 +35,8 @@ Custom component for performing reverse geocoding via the OpenStreetMap Nominati
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [license-shield]: https://img.shields.io/github/license/intrinseca/nominatim-custom-component.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-%40intrinseca-blue.svg?style=for-the-badge
-[pre-commit]: https://github.com/pre-commit/pre-commit
-[pre-commit-shield]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge
+[prek]: https://github.com/j178/prek
+[prek-shield]: https://img.shields.io/badge/prek-enabled-brightgreen?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/intrinseca/nominatim-custom-component.svg?style=for-the-badge
 [releases]: https://github.com/intrinseca/nominatim-custom-component/releases
 [user_profile]: https://github.com/intrinseca

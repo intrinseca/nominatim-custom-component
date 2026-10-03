@@ -47,8 +47,8 @@ People _love_ thorough bug reports. I'm not even kidding.
 Use [black](https://github.com/ambv/black) and [prettier](https://prettier.io/)
 to make sure the code follows the style.
 
-Or use the `pre-commit` settings implemented in this repository
-(see deicated section below).
+Or use the `prek` settings implemented in this repository
+(see dedicated section below).
 
 ## Test your code modification
 
@@ -60,27 +60,27 @@ Home Assistant instance running and already configured with the included
 [`.devcontainer/configuration.yaml`](./.devcontainer/configuration.yaml)
 file.
 
-You can use the `pre-commit` settings implemented in this repository to have
-linting tool checking your contributions (see deicated section below).
+You can use the `prek` settings implemented in this repository to have
+linting tool checking your contributions (see dedicated section below).
 
-## Pre-commit
+## Prek
 
-You can use the [pre-commit](https://pre-commit.com/) settings included in the
-repostory to have code style and linting checks.
+You can use the [prek](https://prek.j178.dev/) settings included in the
+repository to have code style and linting checks.
 
-With `pre-commit` tool already installed,
+With `prek` tool already installed,
 activate the settings of the repository:
 
 ```console
-$ pre-commit install
+$ prek install -f
 ```
 
-Now the pre-commit tests will be done every time you commit.
+Now the prek tests will be done every time you commit.
 
 You can run the tests on all repository file with the command:
 
 ```console
-$ pre-commit run --all-files
+$ prek run --all-files
 ```
 
 ## License
