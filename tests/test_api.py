@@ -4,11 +4,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from geopy.adapters import AioHTTPAdapter
+from geopy.exc import GeocoderRateLimited, GeocoderTimedOut
 from geopy.location import Location
 
 from custom_components.nominatim.api import (
     CacheDict,
     NominatimApiClient,
+    REQUEST_TIMEOUT,
     nominatim_cache,
     round_coordinates,
 )
@@ -41,6 +43,7 @@ def test_geopy_async_adapter():
     """The pinned geopy version accepts the integration's async adapter."""
     client = NominatimApiClient("example")
     assert client.nominatim.adapter.__class__ is AioHTTPAdapter
+    assert client.nominatim.timeout == REQUEST_TIMEOUT
 
 
 @pytest.mark.asyncio
@@ -52,6 +55,7 @@ async def test_reverse_lookup_and_cache():
         geocoder.return_value.reverse = AsyncMock(return_value=address)
         client = NominatimApiClient("example")
         assert "example" in geocoder.call_args.kwargs["user_agent"]
+        assert geocoder.call_args.kwargs["timeout"] == REQUEST_TIMEOUT
         assert await client.async_get_address((51.500012, -0.120012)) is address
         assert await client.async_get_address((51.500022, -0.120022)) is address
         geocoder.return_value.reverse.assert_awaited_once_with("51.5, -0.12", zoom=16)
@@ -67,4 +71,44 @@ async def test_lookup_failure_is_propagated():
         client = NominatimApiClient("example")
         with pytest.raises(RuntimeError, match="offline"):
             await client.async_get_address((1, 2))
+        assert (1, 2) not in nominatim_cache
+
+
+@pytest.mark.asyncio
+async def test_timeout_retries_then_caches_success():
+    """Retry transient timeouts without caching failures."""
+    nominatim_cache.clear()
+    address = Location("London", (51.5, -0.12), {})
+    with (
+        patch("custom_components.nominatim.api.Nominatim") as geocoder,
+        patch("custom_components.nominatim.api.asyncio.sleep", new_callable=AsyncMock) as sleep,
+    ):
+        geocoder.return_value.reverse = AsyncMock(
+            side_effect=[GeocoderTimedOut("slow"), address]
+        )
+        client = NominatimApiClient("example")
+        assert await client.async_get_address((51.5, -0.12)) is address
+        assert await client.async_get_address((51.5, -0.12)) is address
+        assert geocoder.return_value.reverse.await_count == 2
+        sleep.assert_awaited_once_with(1)
+    nominatim_cache.clear()
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_respects_retry_after_and_stops():
+    """Honor the server delay and stop after the bounded number of attempts."""
+    nominatim_cache.clear()
+    with (
+        patch("custom_components.nominatim.api.Nominatim") as geocoder,
+        patch("custom_components.nominatim.api.asyncio.sleep", new_callable=AsyncMock) as sleep,
+    ):
+        geocoder.return_value.reverse = AsyncMock(
+            side_effect=GeocoderRateLimited("limited", retry_after=5)
+        )
+        client = NominatimApiClient("example")
+        with pytest.raises(GeocoderRateLimited):
+            await client.async_get_address((1, 2))
+        assert geocoder.return_value.reverse.await_count == 3
+        assert sleep.await_args_list[0].args == (5,)
+        assert sleep.await_args_list[1].args == (5,)
         assert (1, 2) not in nominatim_cache

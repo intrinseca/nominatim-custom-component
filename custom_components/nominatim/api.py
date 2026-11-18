@@ -1,16 +1,20 @@
 """Nominatim API Client."""
 
+import asyncio
 import logging
 from collections import OrderedDict
 from typing import cast
 
 from geopy.adapters import AioHTTPAdapter
+from geopy.exc import GeocoderRateLimited, GeocoderTimedOut, GeocoderUnavailable
 from geopy.geocoders import Nominatim
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 Coordinates = tuple[float, float]
+REQUEST_TIMEOUT = 15
+MAX_ATTEMPTS = 3
 
 
 class CacheDict(OrderedDict):
@@ -58,6 +62,7 @@ class NominatimApiClient:
         self.nominatim = Nominatim(
             user_agent=f"Nominatim Home Assistant Integration ({self._osm_username})",
             adapter_factory=AioHTTPAdapter,
+            timeout=REQUEST_TIMEOUT,
         )
 
     async def async_get_address(self, location: Coordinates):
@@ -67,9 +72,20 @@ class NominatimApiClient:
 
             if (address := nominatim_cache.get(location)) is None:
                 _LOGGER.debug("Cache miss, looking up from API")
-                address = await self.nominatim.reverse(
-                    f"{location[0]}, {location[1]}", zoom=16
-                )
+                for attempt in range(MAX_ATTEMPTS):
+                    try:
+                        address = await self.nominatim.reverse(
+                            f"{location[0]}, {location[1]}", zoom=16
+                        )
+                        break
+                    except (GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited) as error:
+                        if attempt == MAX_ATTEMPTS - 1:
+                            raise
+                        delay = 2**attempt
+                        if isinstance(error, GeocoderRateLimited):
+                            delay = max(delay, error.retry_after or 0)
+                        _LOGGER.warning("Reverse geocoding failed; retrying in %s seconds: %s", delay, error)
+                        await asyncio.sleep(delay)
                 nominatim_cache[location] = address
 
             return address
