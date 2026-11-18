@@ -81,7 +81,9 @@ async def test_timeout_retries_then_caches_success():
     address = Location("London", (51.5, -0.12), {})
     with (
         patch("custom_components.nominatim.api.Nominatim") as geocoder,
-        patch("custom_components.nominatim.api.asyncio.sleep", new_callable=AsyncMock) as sleep,
+        patch(
+            "custom_components.nominatim.api.asyncio.sleep", new_callable=AsyncMock
+        ) as sleep,
     ):
         geocoder.return_value.reverse = AsyncMock(
             side_effect=[GeocoderTimedOut("slow"), address]
@@ -100,7 +102,9 @@ async def test_rate_limit_respects_retry_after_and_stops():
     nominatim_cache.clear()
     with (
         patch("custom_components.nominatim.api.Nominatim") as geocoder,
-        patch("custom_components.nominatim.api.asyncio.sleep", new_callable=AsyncMock) as sleep,
+        patch(
+            "custom_components.nominatim.api.asyncio.sleep", new_callable=AsyncMock
+        ) as sleep,
     ):
         geocoder.return_value.reverse = AsyncMock(
             side_effect=GeocoderRateLimited("limited", retry_after=5)

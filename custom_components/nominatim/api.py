@@ -78,13 +78,21 @@ class NominatimApiClient:
                             f"{location[0]}, {location[1]}", zoom=16
                         )
                         break
-                    except (GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited) as error:
+                    except (
+                        GeocoderTimedOut,
+                        GeocoderUnavailable,
+                        GeocoderRateLimited,
+                    ) as error:
                         if attempt == MAX_ATTEMPTS - 1:
                             raise
                         delay = 2**attempt
                         if isinstance(error, GeocoderRateLimited):
                             delay = max(delay, error.retry_after or 0)
-                        _LOGGER.warning("Reverse geocoding failed; retrying in %s seconds: %s", delay, error)
+                        _LOGGER.warning(
+                            "Reverse geocoding failed; retrying in %s seconds: %s",
+                            delay,
+                            error,
+                        )
                         await asyncio.sleep(delay)
                 nominatim_cache[location] = address
 
